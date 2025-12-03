@@ -81,8 +81,7 @@ Analysis/
 - **Purpose**: Compare human effort between base and corrected stages
 - **Tests**: Wilcoxon signed-rank (paired continuous)
 - **Plots**: Histograms, scatter plots, composition boxplots
-- **Output**: 4 figures per stage pair + CSV
-
+- **Output**: 4 figures per stage pair 
 **`effort_cluster_analysis.py`**
 - **Purpose**: Relationship between effort and cluster size
 - **Tests**: Spearman correlation, linear regression
@@ -93,13 +92,13 @@ Analysis/
 - **Purpose**: Security vulnerability analysis
 - **Tests**: Mann-Whitney U (unpaired), Wilcoxon (paired)
 - **Plots**: Bar charts, boxplots, paired line plots
-- **Output**: Multiple figures + CSV results
+- **Output**: Multiple figures
 
 **`llm_alignment_analysis.py`**
 - **Purpose**: LLM vs human agreement
 - **Metrics**: F1 score, precision, recall, agreement %
 - **Plots**: Metrics bar chart, confusion matrices
-- **Output**: 3 figures + summary CSV
+- **Output**: 3 figures
 
 **`repository_metadata.py`**
 - **Purpose**: Repository characteristics
@@ -126,17 +125,10 @@ Analysis/
    └── Analyze repository metadata
 
 4. Output
-   figures/ directory (PNG + CSV files)
+   figures/ directory (PNGfiles)
 ```
 
 ## Output Files
-
-### Statistical Results (CSV)
-- `mcnemar_pairwise_results.csv`
-- `human_effort_paired_with_ir_to_with_ir_corrected.csv`
-- `human_effort_paired_with_overrides_to_with_overrides_corrected.csv`
-- `kubescape_mann_whitney_results.csv`
-- `llm_human_alignment_summary.csv`
 
 ### Visualizations (PNG)
 **Success Rates**
