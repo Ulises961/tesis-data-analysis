@@ -28,11 +28,11 @@ def rank_biserial_from_wilcoxon(deltas):
 
 def analyze_kubescape(results, fig_dir):
     """
-    Compare Kubescape vulnerability levels across all stages.
+    Compare Kubescape misconfiguration levels across all stages.
     Includes Mann-Whitney U tests and summary statistics.
     """
     print("\n" + "="*80)
-    print("KUBESCAPE VULNERABILITY ANALYSIS")
+    print("KUBESCAPE MISCONFIGURATION ANALYSIS")
     print("="*80)
 
     records = []
@@ -69,9 +69,9 @@ def analyze_kubescape(results, fig_dir):
     dfk = pd.DataFrame(records)
     print(f"Loaded {len(dfk)} Kubescape records across {dfk['stage'].nunique()} stages.")
 
-    summary = dfk.groupby("stage")["fail_pct"].agg(["mean", "median", "std", "count"]).sort_index()
-    print("\n--- Kubescape vulnerability summary (% of controls failing) ---")
-    print(summary.round(2).to_string())
+    summary = dfk.groupby("stage")["fail_ratio"].agg(["mean", "median", "std", "count"]).sort_index()
+    print("\n--- Kubescape vulnerability ratio summary ---")
+    print(summary.round(4).to_string())
 
     stage_labels = {
         "without_ir": "Without IR",
@@ -98,8 +98,8 @@ def analyze_kubescape(results, fig_dir):
     
     mwu_results = []
     for s1, s2 in test_pairs:
-        d1 = dfk[dfk["stage"] == s1]["fail_pct"]
-        d2 = dfk[dfk["stage"] == s2]["fail_pct"]
+        d1 = dfk[dfk["stage"] == s1]["fail_ratio"]
+        d2 = dfk[dfk["stage"] == s2]["fail_ratio"]
         
         if len(d1) < 2 or len(d2) < 2:
             print(f"{s1} vs {s2}: insufficient data")
@@ -111,7 +111,7 @@ def analyze_kubescape(results, fig_dir):
             median_diff = d2.median() - d1.median()
             
             print(f"{s1:25s} vs {s2:25s}: n1={len(d1):2d}, n2={len(d2):2d}, "
-                  f"U={u_stat:6.1f}, p={p_val:.4f}, r={r_rb:6.3f}, Δmedian={median_diff:6.2f}%")
+                  f"U={u_stat:6.1f}, p={p_val:.4f}, r={r_rb:6.3f}, Δmedian={median_diff:6.4f}")
             
             mwu_results.append({
                 "stage_1": s1,
@@ -130,44 +130,44 @@ def analyze_kubescape(results, fig_dir):
 
     # Bar chart
     plt.figure(figsize=(10, 6))
-    sns.barplot(data=dfk, x="stage_label", y="fail_pct", errorbar="sd", palette="magma", 
+    sns.barplot(data=dfk, x="stage_label", y="fail_ratio", errorbar="sd", palette="magma", 
                 order=[stage_labels[s] for s in stage_order if s in dfk["stage"].values])
-    plt.ylim(0, 100)
-    plt.ylabel("Failed Controls (%)", fontsize=11, weight="bold")
+    plt.ylim(0, 1.0)
+    plt.ylabel("Kubescape Misconfiguration Ratio", fontsize=11, weight="bold")
     plt.xlabel("Stage", fontsize=11, weight="bold")
-    plt.title("Average Kubescape Vulnerability Percentage by Stage", fontsize=12, weight="bold")
+    plt.title("Average Kubescape Misconfiguration Ratio by Stage", fontsize=12, weight="bold")
     plt.xticks(rotation=0, ha="center", fontsize=9)
     plt.tight_layout()
-    outpath = os.path.join(fig_dir, "kubescape_vulnerability_ratio_by_stage.png")
+    outpath = os.path.join(fig_dir, "kubescape_misconfiguration_ratio_by_stage.png")
     plt.savefig(outpath, dpi=300)
     plt.close()
     print(f"✓ Saved {outpath}")
 
     # Boxplot
     fig, ax = plt.subplots(figsize=(10, 6))
-    sns.stripplot(data=dfk, x="stage_label", y="fail_pct", 
+    sns.stripplot(data=dfk, x="stage_label", y="fail_ratio", 
                   order=[stage_labels[s] for s in stage_order if s in dfk["stage"].values],
                   palette="pastel", alpha=0.5, size=4, jitter=0.25, ax=ax)
-    sns.boxplot(data=dfk, x="stage_label", y="fail_pct", 
+    sns.boxplot(data=dfk, x="stage_label", y="fail_ratio", 
                 order=[stage_labels[s] for s in stage_order if s in dfk["stage"].values],
                 hue="stage_label", palette="pastel", showfliers=False, ax=ax,
                 boxprops=dict(alpha=0.7), whiskerprops=dict(linewidth=1.5),
                 capprops=dict(linewidth=1.5), medianprops=dict(linewidth=2, color='red'),
                 legend=False)
     
-    ymin = dfk["fail_pct"].min()
-    ymax = dfk["fail_pct"].max()
+    ymin = dfk["fail_ratio"].min()
+    ymax = dfk["fail_ratio"].max()
     yrange = ymax - ymin
     padding = yrange * 0.15
-    ax.set_ylim(max(0, ymin - padding), min(100, ymax + padding))
+    ax.set_ylim(max(0, ymin - padding), min(1.0, ymax + padding))
     
-    ax.set_ylabel("Failed Controls (%)", fontsize=11, weight="bold")
+    ax.set_ylabel("Failed Controls / Total Controls", fontsize=11, weight="bold")
     ax.set_xlabel("Stage", fontsize=11, weight="bold")
-    ax.set_title("Distribution of Kubescape Vulnerability Percentages (Zoomed)", 
+    ax.set_title("Distribution of Kubescape Misconfiguration Ratios (Zoomed)", 
                 fontsize=12, weight="bold")
     ax.tick_params(axis='x', rotation=0, labelsize=9)
     plt.tight_layout()
-    outpath_box = os.path.join(fig_dir, "kubescape_vulnerability_distribution.png")
+    outpath_box = os.path.join(fig_dir, "kubescape_misconfiguration_ratio_distribution.png")
     plt.savefig(outpath_box, dpi=300)
     plt.close()
     print(f"✓ Saved {outpath_box}")
@@ -206,14 +206,14 @@ def analyze_kubescape_paired(results, fig_dir, stage_a="with_ir", stage_b="with_
         return pd.DataFrame()
 
     dfk = pd.DataFrame(rows)
-    pivot = dfk.pivot(index="app", columns="stage", values="fail_pct")
+    pivot = dfk.pivot(index="app", columns="stage", values="fail_ratio")
     if stage_a not in pivot.columns or stage_b not in pivot.columns:
         print(f"Missing data for {stage_a} or {stage_b}.")
         return dfk
     
     paired = pivot.dropna(subset=[stage_a, stage_b]).copy()
-    paired = paired.rename(columns={stage_a: "pct_a", stage_b: "pct_b"})
-    paired["delta"] = paired["pct_b"] - paired["pct_a"]
+    paired = paired.rename(columns={stage_a: "ratio_a", stage_b: "ratio_b"})
+    paired["delta"] = paired["ratio_b"] - paired["ratio_a"]
     n = len(paired)
     if n == 0:
         print(f"No paired apps between {stage_a} and {stage_b}.")
@@ -226,15 +226,15 @@ def analyze_kubescape_paired(results, fig_dir, stage_a="with_ir", stage_b="with_
           f"Worsened: {worsened} ({worsened/n:.1%}) | Unchanged: {unchanged} ({unchanged/n:.1%})")
 
     try:
-        stat, p = wilcoxon(paired["pct_a"], paired["pct_b"], zero_method="wilcox")
+        stat, p = wilcoxon(paired["ratio_a"], paired["ratio_b"], zero_method="wilcox")
     except Exception:
         stat, p = np.nan, np.nan
     
     median_delta = paired["delta"].median()
     q1, q3 = paired["delta"].quantile([0.25, 0.75])
     r_rb = rank_biserial_from_wilcoxon(paired["delta"].values)
-    print(f"Paired Wilcoxon {stage_a} → {stage_b}: n={n}, median Δ={median_delta:.3f}%, "
-          f"IQR=({q1:.3f}, {q3:.3f}), stat={stat}, p={p}, rank-biserial≈{r_rb:.3f}")
+    print(f"Paired Wilcoxon {stage_a} → {stage_b}: n={n}, median Δ={median_delta:.4f}, "
+          f"IQR=({q1:.4f}, {q3:.4f}), stat={stat}, p={p}, rank-biserial≈{r_rb:.3f}")
 
     human_stage_labels = {
         "without_ir": "Without IR",
@@ -246,20 +246,20 @@ def analyze_kubescape_paired(results, fig_dir, stage_a="with_ir", stage_b="with_
     label_a = human_stage_labels.get(stage_a, stage_a)
     label_b = human_stage_labels.get(stage_b, stage_b)
 
-    zoom_needed = paired[["pct_a","pct_b"]].to_numpy().max() <= 30
+    zoom_needed = paired[["ratio_a","ratio_b"]].to_numpy().max() <= 0.30
 
     # Paired lines plot
     plt.figure(figsize=(9, max(4, n * 0.12)))
     apps_sorted = paired.sort_values("delta").index.tolist()
     for app in apps_sorted:
-        a = paired.loc[app, "pct_a"]
-        b = paired.loc[app, "pct_b"]
+        a = paired.loc[app, "ratio_a"]
+        b = paired.loc[app, "ratio_b"]
         color = "#2ecc71" if b < a else ("#e74c3c" if b > a else "#999999") # type: ignore
         plt.plot([0, 1], [a, b], marker="o", color=color, alpha=0.7, linewidth=1) # type: ignore
     plt.xticks([0, 1], [label_a, label_b], fontsize=11)
-    plt.ylabel("Kubescape Failed Controls (%)")
+    plt.ylabel("Kubescape Misconfiguration Ratio")
     plt.title(f"Per-App Kubescape Change ({label_a} → {label_b})", fontsize=13, weight="bold")
-    plt.ylim(0, 100 if not zoom_needed else 30)
+    plt.ylim(0, 1.0 if not zoom_needed else 0.3)
     plt.tight_layout()
     fname = os.path.join(fig_dir, f"kubescape_paired_lines_{stage_a}_to_{stage_b}.png")
     plt.savefig(fname, dpi=300)
@@ -269,13 +269,13 @@ def analyze_kubescape_paired(results, fig_dir, stage_a="with_ir", stage_b="with_
     # Boxplot comparison
     df_sub = dfk[dfk["stage"].isin([stage_a, stage_b])].copy()
     plt.figure(figsize=(7, 5))
-    sns.boxplot(data=df_sub, x="stage", y="fail_pct", hue="stage",
+    sns.boxplot(data=df_sub, x="stage", y="fail_ratio", hue="stage",
                 order=[stage_a, stage_b], palette="pastel", legend=False)
     plt.xticks([0, 1], [label_a, label_b], fontsize=11)
-    plt.ylabel("Kubescape Failed Controls (%)")
+    plt.ylabel("Kubescape Misconfiguration Ratio")
     plt.xlabel("")
     plt.title(f"Kubescape Distribution: {label_a} vs {label_b}", fontsize=12, weight="bold")
-    plt.ylim(0, 30 if zoom_needed else 100)
+    plt.ylim(0, 0.3 if zoom_needed else 1.0)
     plt.tight_layout()
     fname_box = os.path.join(fig_dir, f"kubescape_box_{stage_a}_vs_{stage_b}.png")
     plt.savefig(fname_box, dpi=300)
