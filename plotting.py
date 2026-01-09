@@ -39,7 +39,8 @@ def plot_success_rates(success, fig_dir):
     for rect, v in zip(bars, success.values):
         plt.text(rect.get_x() + rect.get_width() / 2, v + 1, f"{v:.1f}%", 
                 ha="center", va="bottom")
-    
+    # tilt x labels
+    plt.gca().set_xticklabels(success.index, rotation=45, ha="right")
     plt.tight_layout()
     plt.savefig(os.path.join(fig_dir, "deployment_success_rates.png"), dpi=300)
     plt.close()
@@ -53,15 +54,12 @@ def plot_per_metric_success_rates(df, fig_dir):
         ("expected_behaviour", "Tested Behaviour"),
     ]
     stage_order = [
-        "without_ir", "with_ir", "with_ir_corrected",
-        "with_overrides", "with_overrides_corrected"
+        "without_ir", "with_ir", "with_overrides"
     ]
     labels = {
         "without_ir": "Without IR",
         "with_ir": "With IR",
-        "with_ir_corrected": "With IR Corrected",
         "with_overrides": "IR With Overrides",
-        "with_overrides_corrected": "IR With Overrides Corrected",
     }
 
     metric_success = []
@@ -108,6 +106,14 @@ def plot_per_metric_success_rates(df, fig_dir):
     plt.xlabel("Metrics")
     plt.ylim(0, 100)
     plt.legend(title="Stage", bbox_to_anchor=(1.05, 1), loc="upper left")
+    ## Add value annotations
+    for p in plt.gca().patches:
+        height = p.get_height()
+        if height > 0:
+            plt.gca().annotate(f'{height:.1f}%', 
+                            (p.get_x() + p.get_width() / 2., height), 
+                            ha='center', va='bottom', fontsize=8, weight='bold', 
+                            xytext=(0, 3), textcoords='offset points')
     plt.title("Success Rates by Metric and Stage")
     plt.tight_layout()
     plt.savefig(os.path.join(fig_dir, "per_metric_success_rates.png"), dpi=300)

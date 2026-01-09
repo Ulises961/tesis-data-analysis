@@ -1,5 +1,5 @@
 .venv/
 bkp/
-results/*
+results/
 __pycache__
 figures/*
