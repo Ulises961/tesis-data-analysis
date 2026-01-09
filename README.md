@@ -21,7 +21,6 @@ ls figures/
 ```
 Analysis/
 ├── analysis.py                      (86 lines)   - Main entry point
-├── analysis_old.py                  (1239 lines) - Original monolithic backup
 │
 ├── Core Modules
 │   ├── utils.py                     (107 lines)  - Data processing utilities
@@ -38,7 +37,6 @@ Analysis/
 ├── Documentation
 │   ├── README_CODE_STRUCTURE.md     - Architecture overview
 │   ├── MODULE_REFERENCE.md          - Quick function reference
-│   ├── REFACTORING_SUMMARY.md       - Before/after comparison
 │   └── README.md                    - This file
 │
 ├── Data & Config
